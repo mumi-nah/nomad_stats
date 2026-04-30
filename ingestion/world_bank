@@ -3,6 +3,7 @@
 from base_client import BaseAPIClient
 from datetime import datetime
 import logging
+import asyncio
 
 logging.basicConfig(
     filename="nomad.log",
@@ -97,17 +98,17 @@ class WorldBank(BaseAPIClient):
         merged = {}
         for name, indicator_data in indicator_results.items():
             if isinstance(indicator_data, Exception):
-                logging.info("Ingestion failed for %s - %s",
-                             name,
-                             indicator_data
-                             )
+                logging.info(
+                    "Ingestion failed for %s - %s",
+                    name,
+                    indicator_data
+                    )
                 continue
 
-            # while indicator_results is not None:
+            assert isinstance(indicator_data, dict)
+            # if not isinstance (indicator_data, dict):
             for iso_code, payload in indicator_data.items():
-                if iso_code not in merged:
-                    merged[iso_code] = {}
-                merged[iso_code][name] = payload
+                merged.setdefault(iso_code, {})[name] = payload
         return merged
 
 
@@ -116,13 +117,13 @@ async def main():
     WorldBank client call.
     Returns json data
     """
+    import json
     client = WorldBank()
     all_data = await client.fetch_all_indicators()
-    return all_data
-    # print(json.dumps(all_data, indent=2))
+    # return all_data
+    print(json.dumps(all_data, indent=2))
     # print(all_data.json())
 
 
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(main())
